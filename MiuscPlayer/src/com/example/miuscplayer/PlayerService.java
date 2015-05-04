@@ -91,6 +91,12 @@ public class PlayerService extends Service{
 		}
 	};
 	
+	/**
+	 * 播放进度刷新线程
+	 * 每隔100ms刷新一次播放进度
+	 * @author wanghe
+	 *
+	 */
 	class ProgressThread extends Thread{
 		@Override
 		public void run() {
