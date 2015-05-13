@@ -23,11 +23,12 @@ import org.androidannotations.annotations.EViewGroup;
 @EViewGroup
 public class ScrollLinearLayout extends LinearLayout {
 
-    private String TAG = "ScrollLinearLayout";
+    private static String TAG = "ScrollLinearLayout";
     private Scroller mScroller;
 //    private OverScroller mScroller;
     private VelocityTracker mVelocityTracker;
-    private MyInterpolator interpolator;
+//    private MyInterpolator interpolator;
+    private ScrollerRunnable scrollerRunnable;
 
     private int startY;
 
@@ -42,8 +43,8 @@ public class ScrollLinearLayout extends LinearLayout {
     @AfterInject
     public void init(){
         Log.d(TAG, "init");
-        interpolator = new MyInterpolator();
-        mScroller = new Scroller(getContext(), interpolator);
+//        interpolator = new MyInterpolator();
+        mScroller = new Scroller(getContext());
     }
 
     class MyInterpolator extends BaseInterpolator{
@@ -80,7 +81,11 @@ public class ScrollLinearLayout extends LinearLayout {
                 float initVelocity = mVelocityTracker.getYVelocity();
 
                 Log.d(TAG, "start speed:" + initVelocity);
-                mScroller.startScroll(0, positionY, 0, -200, 1000);
+//                mScroller.startScroll(0, positionY, 0, -200, 1000);
+                if(scrollerRunnable == null){
+                    scrollerRunnable = new ScrollerRunnable();
+                }
+                scrollerRunnable.start((int) initVelocity);
                 invalidate();
                 return true;
             case MotionEvent.ACTION_CANCEL:
@@ -107,5 +112,33 @@ public class ScrollLinearLayout extends LinearLayout {
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         return super.onInterceptTouchEvent(ev);
+    }
+
+    class ScrollerRunnable implements Runnable{
+
+        private int oldSpeed;
+        private int currSpeed;
+
+        private static final int T = 15;
+
+        public void start(int speed) {
+            oldSpeed = currSpeed;
+            currSpeed = speed;
+            Log.d(TAG, "old_speed:" + oldSpeed + "    curr_speed:" + currSpeed + "   runnable:" + this + "   currTime:" + System.currentTimeMillis());
+            postOnAnimation(this);
+        }
+
+        @Override
+        public void run() {
+            int temp = currSpeed - 10;
+            if(oldSpeed != 0){
+                int currY = getScrollY();
+                int s = (oldSpeed + currSpeed) * T / 1000;
+                scrollBy(0, -s);
+            }
+            if(temp > 0){
+                start(temp);
+            }
+        }
     }
 }
