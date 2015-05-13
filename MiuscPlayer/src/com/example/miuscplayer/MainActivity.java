@@ -23,7 +23,6 @@ import com.example.miuscplayer.aidl.IPlayerService;
 import com.example.miuscplayer.aidl.IPlayerService.Stub;
 import com.example.miuscplayer.aidl.OnProgressChanageListener;
 
-
 public class MainActivity extends Activity {
 	
 	private static final String TAG = "MainActivity";
@@ -43,6 +42,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         
 //        mPlayer = MediaPlayer.create(this, R.raw.test);
@@ -201,7 +201,13 @@ public class MainActivity extends Activity {
 							// TODO Auto-generated method stub
 							Log.d(TAG, "progress:" + progress + "   max:" + max);
 							updateSeekBar(progress, max);
-						}});
+						}
+
+						@Override
+						public void onBufferUpdateChange(int buffer) throws RemoteException {
+
+						}
+					});
 				} catch (RemoteException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -289,4 +295,5 @@ public class MainActivity extends Activity {
         }
         return super.onOptionsItemSelected(item);
     }
+
 }
