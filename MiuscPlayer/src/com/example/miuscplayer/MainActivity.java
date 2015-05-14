@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
+import android.view.DragEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -18,6 +19,7 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -58,7 +60,7 @@ public class MainActivity extends Activity {
 	ScrollLinearLayout scrollLayout;
 
 	@ViewById(R.id.list_view)
-	ListView mListView;
+	MyListView mListView;
 	
 	private int startProgressTemp;
 	private int stopProgressTemp;
@@ -117,14 +119,23 @@ public class MainActivity extends Activity {
 		Intent intent = new Intent(this, PlayerService.class);
 		bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
 
-		ArrayList<String> list = new ArrayList<>();
+		final ArrayList<String> list = new ArrayList<>();
 		for(int i = 1; i <= 50; i++){
 //			TextView t = new TextView(this);
 			list.add(i + "、测试");
 //			scrollLayout.addView(t, new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 100));
 		}
+		final ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list);
+		mListView.setAdapter(adapter);
+		mListView.setOnDeleteListener(new MyListView.OnDeleteListener(){
 
-		mListView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, list));
+			@Override
+			public void onDeleter(int position, AdapterView listView) {
+				Log.d(TAG, "positon:" + position + "   " + list.get(position));
+				list.remove(position);
+				adapter.notifyDataSetChanged();
+			}
+		});
 	}
 
 	@Click(R.id.button_play)
