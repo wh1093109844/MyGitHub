@@ -62,12 +62,21 @@
         android:text="霍元甲"/>
 
     <com.example.miuscplayer.ScrollLinearLayout_
-        android:layout_width="match_parent"
-        android:layout_height="5000dp">
+        android:id="@+id/scroll_layout"
+        android:layout_width="100dp"
+        android:orientation="vertical"
+        android:layout_height="100dp">
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="滚动测试"/>
     </com.example.miuscplayer.ScrollLinearLayout_>
+
+    <com.example.miuscplayer.MyListView
+        android:id="@+id/list_view"
+        android:background="#9983CC39"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </com.example.miuscplayer.MyListView>
 
 </RelativeLayout>

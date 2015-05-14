@@ -1,5 +1,6 @@
 package com.example.miuscplayer;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -12,9 +13,14 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
@@ -23,14 +29,36 @@ import com.example.miuscplayer.aidl.IPlayerService;
 import com.example.miuscplayer.aidl.IPlayerService.Stub;
 import com.example.miuscplayer.aidl.OnProgressChanageListener;
 
+import org.androidannotations.annotations.AfterViews;
+import org.androidannotations.annotations.Click;
+import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.SeekBarProgressChange;
+import org.androidannotations.annotations.SeekBarTouchStart;
+import org.androidannotations.annotations.SeekBarTouchStop;
+import org.androidannotations.annotations.UiThread;
+import org.androidannotations.annotations.ViewById;
+
+import java.util.ArrayList;
+
+@EActivity(R.layout.activity_main)
 public class MainActivity extends Activity {
 	
 	private static final String TAG = "MainActivity";
-	private Button palyerButton; 
-//	private MediaPlayer mPlayer;
-	private SeekBar mSeekBar;
-//	private SeekThread seekThreak;
-	private TextView mTextView;
+
+	@ViewById(R.id.button_play)
+	Button palyerButton;
+
+	@ViewById(R.id.seek_bar)
+	SeekBar mSeekBar;
+
+	@ViewById(R.id.date_text)
+	TextView mTextView;
+
+	@ViewById(R.id.scroll_layout)
+	ScrollLinearLayout scrollLayout;
+
+	@ViewById(R.id.list_view)
+	ListView mListView;
 	
 	private int startProgressTemp;
 	private int stopProgressTemp;
@@ -39,148 +67,20 @@ public class MainActivity extends Activity {
 	private ServiceConnection serviceConnection;
 	private IPlayerService.Stub mBinder;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+	private VelocityTracker mVelocityTracker;
 
-        setContentView(R.layout.activity_main);
-        
-//        mPlayer = MediaPlayer.create(this, R.raw.test);
-        palyerButton = (Button) findViewById(R.id.button_play);
-        mSeekBar = (SeekBar) findViewById(R.id.seek_bar);
-        mTextView = (TextView) findViewById(R.id.date_text);
-        
-//        mPlayer.setOnPreparedListener(new OnPreparedListener() {
-//			
-//			@Override
-//			public void onPrepared(MediaPlayer mp) {
-//				Log.d(TAG, "加载MP3完成！");
-//				palyerButton.setEnabled(true);
-//			}
-//		});
-//        mPlayer.prepareAsync();
-        palyerButton.setEnabled(false);
-        palyerButton.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				// TODO Auto-generated method stub
-				if(v.getTag() == null){
-//					try {
-//						mPlayer.prepare();
-//					} catch (IllegalStateException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					} catch (IOException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					}
-//					mPlayer.start();
-//					if(seekThreak != null){
-//						seekThreak.interrupt();
-//					}
-//					seekThreak = new SeekThread();
-//					seekThreak.start();
-					try {
-						mBinder.start();
-					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					v.setTag(new Object());
-					v.setBackgroundResource(R.drawable.ic_media_pause);
-				}else{
-//					mPlayer.pause();
-//					if(seekThreak != null){
-//						seekThreak.interrupt();
-//					}
-					try {
-						mBinder.stop();
-					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					v.setTag(null);
-					v.setBackgroundResource(R.drawable.ic_media_play);
-				}
-			}
-		});
-        
-//        mPlayer.setOnBufferingUpdateListener(new OnBufferingUpdateListener() {
-//			
-//			@Override
-//			public void onBufferingUpdate(MediaPlayer mp, int percent) {
-//				// TODO Auto-generated method stub
-//				Log.d(TAG, "setOnBufferingUpdateListener:" + percent);
-//			}
-//		});
-//        
-//        mPlayer.setOnInfoListener(new OnInfoListener() {
-//			
-//			@Override
-//			public boolean onInfo(MediaPlayer mp, int what, int extra) {
-//				Log.d(TAG, "setOnInfoListener  what:" + what + "   extra:" + extra);
-//				return false;
-//			}
-//		});
-//        
-//        mPlayer.setOnSeekCompleteListener(new OnSeekCompleteListener() {
-//			
-//			@Override
-//			public void onSeekComplete(MediaPlayer mp) {
-//				// TODO Auto-generated method stub
-//				
-//			}
-//		});
-        
-        mSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			
-			@Override
-			public void onStopTrackingTouch(SeekBar seekBar) {
-				Log.d(TAG, "onStopTrackingTouch");
-				stopProgressTemp = seekBar.getProgress();
-				if(stopProgressTemp > startProgressTemp){
-					temp_direction = 1;
-				}else{
-					temp_direction = -1;
-				}
-//				mPlayer.seekTo(stopProgressTemp);
-				try {
-					mBinder.seekTo(stopProgressTemp);
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				isTouch = false;
-			}
-			
-			@Override
-			public void onStartTrackingTouch(SeekBar seekBar) {
-				// TODO Auto-generated method stub
-				Log.d(TAG, "onStartTrackingTouch");
-				startProgressTemp = seekBar.getProgress();
-				isTouch = true;
-			}
-			
-			@Override
-			public void onProgressChanged(SeekBar seekBar, int progress,
-					boolean fromUser) {
-				Log.d(TAG, "progress:" + progress + "   fromUser:" + fromUser);
-				mTextView.setText(getTime(progress) + " / " + getTime(seekBar.getMax()));
-				startProgressTemp = 0;
-				stopProgressTemp = 0;
-				temp_direction = 0;
-			}
-		});
-        
-        serviceConnection = new ServiceConnection() {
-			
+	@AfterViews
+	public void init(){
+
+		palyerButton.setEnabled(false);
+		serviceConnection = new ServiceConnection() {
+
 			@Override
 			public void onServiceDisconnected(ComponentName name) {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			@Override
 			public void onServiceConnected(ComponentName name, IBinder service) {
 				// TODO Auto-generated method stub
@@ -216,8 +116,77 @@ public class MainActivity extends Activity {
 		};
 		Intent intent = new Intent(this, PlayerService.class);
 		bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-    }
-    
+
+		ArrayList<String> list = new ArrayList<>();
+		for(int i = 1; i <= 50; i++){
+//			TextView t = new TextView(this);
+			list.add(i + "、测试");
+//			scrollLayout.addView(t, new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 100));
+		}
+
+		mListView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, list));
+	}
+
+	@Click(R.id.button_play)
+	public void play(View v){
+		if(v.getTag() == null){
+			try {
+				mBinder.start();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			v.setTag(new Object());
+			v.setBackgroundResource(R.drawable.ic_media_pause);
+		}else{
+			try {
+				mBinder.stop();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			v.setTag(null);
+			v.setBackgroundResource(R.drawable.ic_media_play);
+		}
+	}
+
+	@SeekBarTouchStart(R.id.seek_bar)
+	public void onStopTrackingTouch(SeekBar seekBar) {
+		Log.d(TAG, "onStopTrackingTouch");
+		stopProgressTemp = seekBar.getProgress();
+		if(stopProgressTemp > startProgressTemp){
+			temp_direction = 1;
+		}else{
+			temp_direction = -1;
+		}
+//				mPlayer.seekTo(stopProgressTemp);
+		try {
+			mBinder.seekTo(stopProgressTemp);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		isTouch = false;
+	}
+
+	@SeekBarTouchStop(R.id.seek_bar)
+	public void onStartTrackingTouch(SeekBar seekBar) {
+		// TODO Auto-generated method stub
+		Log.d(TAG, "onStartTrackingTouch");
+		startProgressTemp = seekBar.getProgress();
+		isTouch = true;
+	}
+
+	@SeekBarProgressChange(R.id.seek_bar)
+	public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+		Log.d(TAG, "progress:" + progress + "   fromUser:" + fromUser);
+		mTextView.setText(getTime(progress) + " / " + getTime(seekBar.getMax()));
+		startProgressTemp = 0;
+		stopProgressTemp = 0;
+		temp_direction = 0;
+	}
+
+	@UiThread
     public void updateSeekBar(int progress, int max){
     	if(isTouch){
     		return;
@@ -234,13 +203,6 @@ public class MainActivity extends Activity {
     	mSeekBar.setMax(max);
     	mSeekBar.setProgress(progress);
     }
-    
-    Handler handler = new Handler(){
-    	public void handleMessage(android.os.Message msg) {
-    		updateSeekBar(msg.arg2, msg.arg1);
-    		
-    	};
-    };
     
     public String getTime(int time){
     	StringBuffer sbf = new StringBuffer();
@@ -296,4 +258,50 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+//	@Override
+//	public boolean dispatchTouchEvent(MotionEvent ev) {
+//		switch (ev.getAction()) {
+//			case MotionEvent.ACTION_DOWN:
+//				Log.d(TAG, "dispatchTouchEvent ACTION_DOWN");
+//				if (mVelocityTracker == null) {
+//					mVelocityTracker = VelocityTracker.obtain();
+//				} else {
+//					mVelocityTracker.clear();
+//				}
+//				break;
+//			case MotionEvent.ACTION_MOVE:
+//				Log.d(TAG, "dispatchTouchEvent ACTION_MOVE");
+//				mVelocityTracker.addMovement(ev);
+//				mVelocityTracker.computeCurrentVelocity(1000);
+//				if (Math.abs(mVelocityTracker.getXVelocity()) > Math.abs(mVelocityTracker.getYVelocity())) {
+//					Log.d(TAG, "横向");
+//					onTouchEvent(ev);
+//				 	return true;
+//				} else {
+//					Log.d(TAG, "竖向");
+//				}
+//				break;
+//			case MotionEvent.ACTION_UP:
+//				Log.d(TAG, "dispatchTouchEvent ACTION_UP");
+//				break;
+//		}
+//		return super.dispatchTouchEvent(ev);
+//	}
+//
+//	@Override
+//	public boolean onTouchEvent(MotionEvent event) {
+//		Log.d(TAG, "onTouchEvent");
+//		switch (event.getAction()) {
+//			case MotionEvent.ACTION_MOVE:
+//				Log.d(TAG, "onTouchEvent ACTION_MOVE");
+//				break;
+//			case MotionEvent.ACTION_DOWN:
+//				Log.d(TAG, "onTouchEvent ACTION_DOWN");
+//				break;
+//			case MotionEvent.ACTION_UP:
+//				Log.d(TAG, "onTouchEvent ACTION_UP");
+//				break;
+//		}
+//		return super.onTouchEvent(event);
+//	}
 }
