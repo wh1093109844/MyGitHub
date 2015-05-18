@@ -141,8 +141,14 @@ public class MainActivity extends Activity {
 			}
 		});
 
-		Uri uri = Uri.parse("http://http://s1.dwstatic.com/group1/M00/A7/4B/5f3cfda08c56b855e96fe831f2b7fe3e.gif");
-		mDraweeView.setImageURI(uri);
+		Uri uri = Uri.parse("http://s1.dwstatic.com/group1/M00/A7/4B/5f3cfda08c56b855e96fe831f2b7fe3e.gif");
+		ImageRequest request = ImageRequestBuilder.newBuilderWithSource(uri).build();
+
+		DraweeController controller = Fresco.newDraweeControllerBuilder()
+				.setImageRequest(request)
+				.setAutoPlayAnimations(true).build();
+		mDraweeView.setController(controller);
+//		mDraweeView.setImageURI(uri);
 	}
 
 	@Click(R.id.button_play)
