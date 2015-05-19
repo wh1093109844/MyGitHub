@@ -331,7 +331,7 @@ public class MainActivity extends Activity {
 			com.example.miuscplayer.InstrumentedDraweeView view = convertView != null ? (com.example.miuscplayer.InstrumentedDraweeView) convertView : createView();
 
 			int size = calcDesiredSize(parent.getWidth(), parent.getHeight());
-			updateViewLayoutParams(view, size, size);
+			updateViewLayoutParams(view, parent.getWidth(), 800);
 
 			String uri = getItem(position);
 			view.initInstrumentation(uri, mPerfListener);
@@ -343,18 +343,20 @@ public class MainActivity extends Activity {
 			GenericDraweeHierarchy gdh = new GenericDraweeHierarchyBuilder(getResources())
 					.setPlaceholderImage(Drawables.sPlaceholderDrawable)
 					.setFailureImage(Drawables.sErrorDrawable)
-					.setRoundingParams(RoundingParams.asCircle())
 					.setProgressBarImage(new ProgressBarDrawable())
 					.build();
-			return new InstrumentedDraweeView(MainActivity.this, gdh);
+			InstrumentedDraweeView view = new InstrumentedDraweeView(MainActivity.this, gdh);
+			view.setLayoutParams(new AbsListView.LayoutParams(AbsListView.LayoutParams.MATCH_PARENT, AbsListView.LayoutParams.WRAP_CONTENT));
+			return view;
 		}
 
 		protected void bind(final InstrumentedDraweeView view, String uri) {
-			ImageRequest imageRequest =
-					ImageRequestBuilder.newBuilderWithSource(Uri.parse(uri))
-							.setResizeOptions(
-									new ResizeOptions(view.getLayoutParams().width, view.getLayoutParams().height))
-							.build();
+//			ImageRequest imageRequest =
+//					ImageRequestBuilder.newBuilderWithSource(Uri.parse(uri))
+//							.setResizeOptions(
+//									new ResizeOptions(view.getLayoutParams().width, view.getLayoutParams().height))
+//							.build();
+			ImageRequest imageRequest = ImageRequest.fromUri(uri);
 			DraweeController draweeController = Fresco.newDraweeControllerBuilder()
 					.setImageRequest(imageRequest)
 					.setOldController(view.getController())

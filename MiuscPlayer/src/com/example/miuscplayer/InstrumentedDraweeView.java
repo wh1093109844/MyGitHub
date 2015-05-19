@@ -17,6 +17,8 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Animatable;
 import android.net.Uri;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.ViewGroup;
 
 import com.facebook.drawee.controller.AbstractDraweeControllerBuilder;
 import com.facebook.drawee.controller.BaseControllerListener;
@@ -24,12 +26,15 @@ import com.facebook.drawee.controller.ControllerListener;
 import com.facebook.drawee.generic.GenericDraweeHierarchy;
 import com.facebook.drawee.interfaces.SimpleDraweeControllerBuilder;
 import com.facebook.drawee.view.SimpleDraweeView;
+import com.facebook.imagepipeline.image.CloseableBitmap;
+import com.facebook.imagepipeline.image.ImageInfo;
 
 /**
  * {@link SimpleDraweeView} with instrumentation.
  */
 public class InstrumentedDraweeView extends SimpleDraweeView implements Instrumented {
 
+  private static String TAG = null;
   private Instrumentation mInstrumentation;
   private ControllerListener<Object> mListener;
 
@@ -54,6 +59,7 @@ public class InstrumentedDraweeView extends SimpleDraweeView implements Instrume
   }
 
   private void init() {
+    TAG = getClass().getSimpleName();
     mInstrumentation = new Instrumentation(this);
     mListener = new BaseControllerListener<Object>() {
       @Override
@@ -66,6 +72,15 @@ public class InstrumentedDraweeView extends SimpleDraweeView implements Instrume
         Object imageInfo,
         Animatable animatable) {
         mInstrumentation.onSuccess();
+
+        if (imageInfo != null && imageInfo instanceof ImageInfo) {
+          final ImageInfo info = (ImageInfo) imageInfo;
+          Log.d(TAG, "id = " + id + "  width = " + info.getWidth() + "  height:" + info.getHeight());
+          ViewGroup.LayoutParams params = getLayoutParams();
+          params.height = getWidth() * info.getHeight() / info.getWidth();
+          Log.d(TAG, "params_height:" + params.height);
+          setLayoutParams(params);
+        }
       }
       @Override
       public void onFailure(String id, Throwable throwable) {
