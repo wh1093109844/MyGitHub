@@ -1,35 +1,42 @@
 package com.example.miuscplayer;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.os.Bundle;
-import android.os.Handler;
+import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
-import android.view.DragEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.SeekBar;
-import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
 import com.example.miuscplayer.aidl.IPlayerService;
 import com.example.miuscplayer.aidl.IPlayerService.Stub;
 import com.example.miuscplayer.aidl.OnProgressChanageListener;
+import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.drawee.drawable.ProgressBarDrawable;
+import com.facebook.drawee.generic.GenericDraweeHierarchy;
+import com.facebook.drawee.generic.GenericDraweeHierarchyBuilder;
+import com.facebook.drawee.generic.RoundingParams;
+import com.facebook.drawee.interfaces.DraweeController;
+import com.facebook.drawee.view.SimpleDraweeView;
+import com.facebook.imagepipeline.common.ResizeOptions;
+import com.facebook.imagepipeline.core.ImagePipelineConfig;
+import com.facebook.imagepipeline.request.ImageRequest;
+import com.facebook.imagepipeline.request.ImageRequestBuilder;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.Click;
@@ -61,6 +68,9 @@ public class MainActivity extends Activity {
 
 	@ViewById(R.id.list_view)
 	MyListView mListView;
+
+	@ViewById(R.id.my_image_view)
+	SimpleDraweeView mDraweeView;
 	
 	private int startProgressTemp;
 	private int stopProgressTemp;
@@ -125,9 +135,9 @@ public class MainActivity extends Activity {
 			list.add(i + "、测试");
 //			scrollLayout.addView(t, new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 100));
 		}
-		final ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list);
+		final ImageListAdapter adapter = new ImageListAdapter(this, android.R.layout.simple_list_item_1, new PerfListener());
 		mListView.setAdapter(adapter);
-		mListView.setOnDeleteListener(new MyListView.OnDeleteListener(){
+		mListView.setOnDeleteListener(new MyListView.OnDeleteListener() {
 
 			@Override
 			public void onDeleter(int position, AdapterView listView) {
@@ -136,6 +146,15 @@ public class MainActivity extends Activity {
 				adapter.notifyDataSetChanged();
 			}
 		});
+
+		Uri uri = Uri.parse("http://s1.dwstatic.com/group1/M00/A7/4B/5f3cfda08c56b855e96fe831f2b7fe3e.gif");
+		ImageRequest request = ImageRequestBuilder.newBuilderWithSource(uri).build();
+
+		DraweeController controller = Fresco.newDraweeControllerBuilder()
+				.setImageRequest(request)
+				.setAutoPlayAnimations(true).build();
+		mDraweeView.setController(controller);
+//		mDraweeView.setImageURI(uri);
 	}
 
 	@Click(R.id.button_play)
@@ -170,7 +189,6 @@ public class MainActivity extends Activity {
 		}else{
 			temp_direction = -1;
 		}
-//				mPlayer.seekTo(stopProgressTemp);
 		try {
 			mBinder.seekTo(stopProgressTemp);
 		} catch (RemoteException e) {
@@ -269,50 +287,83 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-//	@Override
-//	public boolean dispatchTouchEvent(MotionEvent ev) {
-//		switch (ev.getAction()) {
-//			case MotionEvent.ACTION_DOWN:
-//				Log.d(TAG, "dispatchTouchEvent ACTION_DOWN");
-//				if (mVelocityTracker == null) {
-//					mVelocityTracker = VelocityTracker.obtain();
-//				} else {
-//					mVelocityTracker.clear();
-//				}
-//				break;
-//			case MotionEvent.ACTION_MOVE:
-//				Log.d(TAG, "dispatchTouchEvent ACTION_MOVE");
-//				mVelocityTracker.addMovement(ev);
-//				mVelocityTracker.computeCurrentVelocity(1000);
-//				if (Math.abs(mVelocityTracker.getXVelocity()) > Math.abs(mVelocityTracker.getYVelocity())) {
-//					Log.d(TAG, "横向");
-//					onTouchEvent(ev);
-//				 	return true;
-//				} else {
-//					Log.d(TAG, "竖向");
-//				}
-//				break;
-//			case MotionEvent.ACTION_UP:
-//				Log.d(TAG, "dispatchTouchEvent ACTION_UP");
-//				break;
-//		}
-//		return super.dispatchTouchEvent(ev);
-//	}
-//
-//	@Override
-//	public boolean onTouchEvent(MotionEvent event) {
-//		Log.d(TAG, "onTouchEvent");
-//		switch (event.getAction()) {
-//			case MotionEvent.ACTION_MOVE:
-//				Log.d(TAG, "onTouchEvent ACTION_MOVE");
-//				break;
-//			case MotionEvent.ACTION_DOWN:
-//				Log.d(TAG, "onTouchEvent ACTION_DOWN");
-//				break;
-//			case MotionEvent.ACTION_UP:
-//				Log.d(TAG, "onTouchEvent ACTION_UP");
-//				break;
-//		}
-//		return super.onTouchEvent(event);
-//	}
+	class ImageListAdapter extends ArrayAdapter<String> {
+
+		private final PerfListener mPerfListener;
+
+		public ImageListAdapter(Context context, int resource, PerfListener perfListener) {
+			super(context, resource);
+			mPerfListener = perfListener;
+		}
+
+		@Override
+		public int getCount() {
+			return Const.IMAGE_URL_LIST.size();
+		}
+
+		@Override
+		public String getItem(int position) {
+			return Const.IMAGE_URL_LIST.get(position);
+		}
+
+		@Override
+		public long getItemId(int position) {
+			return 0;
+		}
+
+		private int calcDesiredSize(int parentWidth, int parentHeight) {
+			int orientation = getContext().getResources().getConfiguration().orientation;
+			int desiredSize = (orientation == Configuration.ORIENTATION_LANDSCAPE) ?
+					parentHeight / 2 : parentHeight / 3;
+			return Math.min(desiredSize, parentWidth);
+		}
+
+		private void updateViewLayoutParams(View view, int width, int height) {
+			ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+			if (layoutParams == null || layoutParams.height != width || layoutParams.width != height) {
+				layoutParams = new AbsListView.LayoutParams(width, height);
+				view.setLayoutParams(layoutParams);
+			}
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			com.example.miuscplayer.InstrumentedDraweeView view = convertView != null ? (com.example.miuscplayer.InstrumentedDraweeView) convertView : createView();
+
+			int size = calcDesiredSize(parent.getWidth(), parent.getHeight());
+			updateViewLayoutParams(view, parent.getWidth(), 800);
+
+			String uri = getItem(position);
+			view.initInstrumentation(uri, mPerfListener);
+			bind(view, uri);
+			return view;
+		}
+
+		protected InstrumentedDraweeView createView() {
+			GenericDraweeHierarchy gdh = new GenericDraweeHierarchyBuilder(getResources())
+					.setPlaceholderImage(Drawables.sPlaceholderDrawable)
+					.setFailureImage(Drawables.sErrorDrawable)
+					.setProgressBarImage(new ProgressBarDrawable())
+					.build();
+			InstrumentedDraweeView view = new InstrumentedDraweeView(MainActivity.this, gdh);
+			view.setLayoutParams(new AbsListView.LayoutParams(AbsListView.LayoutParams.MATCH_PARENT, AbsListView.LayoutParams.WRAP_CONTENT));
+			return view;
+		}
+
+		protected void bind(final InstrumentedDraweeView view, String uri) {
+//			ImageRequest imageRequest =
+//					ImageRequestBuilder.newBuilderWithSource(Uri.parse(uri))
+//							.setResizeOptions(
+//									new ResizeOptions(view.getLayoutParams().width, view.getLayoutParams().height))
+//							.build();
+			ImageRequest imageRequest = ImageRequest.fromUri(uri);
+			DraweeController draweeController = Fresco.newDraweeControllerBuilder()
+					.setImageRequest(imageRequest)
+					.setOldController(view.getController())
+					.setControllerListener(view.getListener())
+					.setAutoPlayAnimations(true)
+					.build();
+			view.setController(draweeController);
+		}
+	}
 }
