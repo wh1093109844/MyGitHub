@@ -84,6 +84,7 @@
         android:id="@+id/my_image_view"
         android:layout_width="match_parent"
         android:layout_height="200dp"
+        android:visibility="gone"
         android:background="@android:color/holo_blue_bright"
         fresco:placeholderImage="@drawable/ic_launcher"
         android:layout_alignParentBottom="true"/>

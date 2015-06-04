@@ -1,6 +1,9 @@
 package com.example.miuscplayer;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +23,8 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.RemoteViews;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -44,6 +49,7 @@ import org.androidannotations.annotations.EActivity;
 import org.androidannotations.annotations.SeekBarProgressChange;
 import org.androidannotations.annotations.SeekBarTouchStart;
 import org.androidannotations.annotations.SeekBarTouchStop;
+import org.androidannotations.annotations.SystemService;
 import org.androidannotations.annotations.UiThread;
 import org.androidannotations.annotations.ViewById;
 
@@ -71,6 +77,9 @@ public class MainActivity extends Activity {
 
 	@ViewById(R.id.my_image_view)
 	SimpleDraweeView mDraweeView;
+
+	@SystemService
+	NotificationManager mNotificationManager;
 	
 	private int startProgressTemp;
 	private int stopProgressTemp;
@@ -282,6 +291,20 @@ public class MainActivity extends Activity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_settings) {
+			RemoteViews v = new RemoteViews(getPackageName(), R.layout.notification_layout);
+			v.setTextViewText(R.id.notification_text, "通知测试！");
+			v.setImageViewResource(R.id.notification_image, R.drawable.image089);
+
+			Notification n = new Notification(R.drawable.image089, "Notification", System.currentTimeMillis());
+			n.flags = Notification.FLAG_AUTO_CANCEL;
+			Intent intent = new Intent(this, MainActivity_.class);
+			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			PendingIntent pi = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+			n.contentIntent = pi;
+			n.contentView = v;
+
+			mNotificationManager.notify(1, n);
             return true;
         }
         return super.onOptionsItemSelected(item);
